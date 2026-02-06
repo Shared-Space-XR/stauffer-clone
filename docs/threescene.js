@@ -1,6 +1,9 @@
 
 import * as THREE from "https://cdn.jsdelivr.net/gh/mesquite-mocap/mesquite.cc@latest/build-static/three.module.js";
 import Stats from "https://cdn.jsdelivr.net/gh/mesquite-mocap/mesquite.cc@latest/build-static/stats.module.js";
+// --- PERFORMANCE MONITOR ---
+const stats = new Stats();
+document.body.appendChild(stats.dom);
 import { OrbitControls } from "https://cdn.jsdelivr.net/gh/mesquite-mocap/mesquite.cc@latest/build-static/OrbitControls.js";
 import { GLTFLoader } from "https://cdn.jsdelivr.net/gh/mesquite-mocap/mesquite.cc/build/GLTFLoader.js";
 
@@ -238,8 +241,11 @@ loader.load(end1GLB, function (gltf) {
 
 
 const clock = new THREE.Clock();
+let lastMoveState = { ...move };
+let lastPlayerPos = { x: player.position.x, z: player.position.z, yaw: player.rotation.y };
 
 function updatePlayer(delta) {
+  let moved = false;
   let moveStep = 0;
   if (move.forward) moveStep -= moveSpeed * delta * 60;
   if (move.backward) moveStep += moveSpeed * delta * 60;
@@ -250,17 +256,34 @@ function updatePlayer(delta) {
     if (isInsideFloorBoundary(nextX, nextZ)) {
       player.position.x = nextX;
       player.position.z = nextZ;
+      moved = true;
     }
   }
   // Turn left/right
-  if (move.left) player.rotation.y += turnSpeed * delta * 60;
-  if (move.right) player.rotation.y -= turnSpeed * delta * 60;
+  if (move.left) {
+    player.rotation.y += turnSpeed * delta * 60;
+    moved = true;
+  }
+  if (move.right) {
+    player.rotation.y -= turnSpeed * delta * 60;
+    moved = true;
+  }
+  return moved;
 }
 
 function animate() {
+  stats.begin();
   const delta = clock.getDelta();
-  updatePlayer(delta);
-  renderer.render(scene, camera);
+  // Only update/render if player moved or input changed
+  const moved = updatePlayer(delta);
+  const moveChanged = Object.keys(move).some(k => move[k] !== lastMoveState[k]);
+  const posChanged = player.position.x !== lastPlayerPos.x || player.position.z !== lastPlayerPos.z || player.rotation.y !== lastPlayerPos.yaw;
+  if (moved || moveChanged || posChanged) {
+    renderer.render(scene, camera);
+    lastMoveState = { ...move };
+    lastPlayerPos = { x: player.position.x, z: player.position.z, yaw: player.rotation.y };
+  }
+  stats.end();
   requestAnimationFrame(animate);
 }
 
