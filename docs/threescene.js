@@ -52,8 +52,8 @@ camera.position.set(0, 0, 0); // camera at player origin
 
 
 // Floor boundary: rectangle matching floor.glb
-const FLOOR_WIDTH = 8; // x direction
-const FLOOR_DEPTH = 44; // z direction
+const FLOOR_WIDTH = 7; // x direction
+const FLOOR_DEPTH = 45; // z direction
 const FLOOR_MIN_X = -FLOOR_WIDTH / 2;
 const FLOOR_MAX_X = FLOOR_WIDTH / 2;
 const FLOOR_MIN_Z = -FLOOR_DEPTH / 2;
@@ -174,7 +174,7 @@ loader.load(ceilingGLB, function (gltf) {
 
   model.rotation.y = Math.PI / 2;
   model.position.y = 7.5; 
-  model.position.z = -12;
+  model.position.z = -14;
     model.traverse(function (child) {
     if (child.isMesh) {
       child.castShadow = true;
@@ -182,6 +182,14 @@ loader.load(ceilingGLB, function (gltf) {
     }
   });
   scene.add(model);
+
+  // clone ceiling and add another one at z=12
+      const model2 = model.clone();
+
+    model2.position.z = 14;
+      scene.add(model2);
+
+
 }, undefined, function (error) {
   console.error(error);
 });
